@@ -12,16 +12,35 @@ using OpenQA.Selenium.Remote;
 using System.Threading;
 using OpenQA.Selenium.Appium.MultiTouch;
 using AndroidTests.Pages;
+using AndroidTests.RunnersAndData;
+using static AndroidTests.RunnersAndData.DataBuilder;
+using System.Collections.Generic;
 
 namespace AndroidTests
 {
     [TestFixture]
     public class SeekBarTests:ViewsPage
     {
-        private static readonly object[] TestData =
+        private static readonly object[] TestDataXScale =
         {
-            new object[] { "io.appium.android.apis:id/scaleX",1}
+            new object[] {DataRepository.Get().ScaleXDataMax() }           
         };
+
+        private static readonly object[] TestDataXTrans =
+        {
+            new object[] {DataRepository.Get().TransXDataMax() }
+        };
+
+        private static readonly object[] TestDataYScale =
+        {
+            new object[] {DataRepository.Get().ScaleYDataMax() }
+        };
+
+        private static readonly object[] TestDataMultiBars =
+        {
+            new object[] {DataRepository.Get().CombChangesInBars() }
+        };
+
 
         private void SearchAndMoveSeekBar(string seekBarId, double percentToMove)
         {
@@ -42,19 +61,55 @@ namespace AndroidTests
         }
 
 
-		[Test, TestCaseSource(nameof(TestData))]
-		//[Test, TestCaseSource(nameof(TestData))]
-		public void SearchAndMoveSeekBar(int numberOfBars, string barsIds, double[] percentsToMove)
+		[Test, TestCaseSource(nameof(TestDataXScale))]
+		public void SeekBarScaleTest(string barId, double perc)
 		{
             if (driver.FindElementById("io.appium.android.apis:id/container").Displayed)
             {
                 GoToRotatingButton();
             }
-			string[] barId = barsIds.Split(',');
-			for (int i = 0; i < percentsToMove.Length; i++)
-			{
-				SearchAndMoveSeekBar(barId[i], percentsToMove[i]);
-			}
+            SearchAndMoveSeekBar(barId, perc);
+            double buttonWidthActual = driver.FindElementByAccessibilityId("Rotating Button").Size.Width;
+            double buttonMaxWidthExpected = driver.Location.Latitude;
+            Assert.IsTrue(buttonMaxWidthExpected < buttonWidthActual);
 		}
-	}
+
+        [Test, TestCaseSource(nameof(TestDataXTrans))]
+        public void SeekBarScaleYTest(string barId, double perc)
+        {
+            if (driver.FindElementById("io.appium.android.apis:id/container").Displayed)
+            {
+                GoToRotatingButton();
+            }
+            SearchAndMoveSeekBar(barId, perc);
+            Assert.IsTrue(driver.FindElementById(barId).Displayed);
+        }
+
+        [Test, TestCaseSource(nameof(TestDataYScale))]
+        public void SeekBarTransXTest(string barId, double perc)
+        {
+            if (driver.FindElementById("io.appium.android.apis:id/container").Displayed)
+            {
+                GoToRotatingButton();
+            }
+            SearchAndMoveSeekBar(barId, perc);
+            double buttonRightBorderActual = driver.FindElementByAccessibilityId("Rotating Button").Location.X + driver.FindElementByAccessibilityId("Rotating Button").Size.Width;
+            double buttonRightBorderExpected = driver.Location.Latitude;
+            Assert.IsTrue(buttonRightBorderActual > buttonRightBorderExpected);
+        }
+
+        [Test, TestCaseSource(nameof(TestDataMultiBars))]
+        public void MultiSeekBar(List <IData> barList)
+        {
+            if (driver.FindElementById("io.appium.android.apis:id/container").Displayed)
+            {
+                GoToRotatingButton();
+            }
+            foreach (IData bar in barList)
+            {
+                SearchAndMoveSeekBar(bar.GetSeekBarId(),bar.GetPercentToMove());
+            }
+            Assert.IsTrue(driver.FindElementById("io.appium.android.apis:id/rotatingButton").Displayed);
+        }
+    }
 }

@@ -34,6 +34,11 @@ namespace AndroidTests.RunnersAndData
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
         }
 
+        [TearDown]
+        public void RunApp()
+        {
+            driver.Navigate().Back();
+        }
 
         [OneTimeTearDown]
         //[Test]
